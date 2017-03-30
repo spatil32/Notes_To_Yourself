@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Notes To Remember</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<style type="text/css">
+		body {
+			background: linear-gradient(to right, #AB708C, #6EC2F2);			
+			font-family: sans-serif;
+			text-align: center;
+		}
+		input 
+		{
+			width:500px;
+			text-align:left;
+			padding-right:10px;
+		}
+		textarea 
+		{
+			width:500px;
+			height:200px;
+			text-align:left;
+			padding-right:10px;
+		}
+		li 
+		{
+			width:500px;
+			text-align:left;
+			padding-right:10px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<Label id="lblHome" align="center"><h3>Notes List</h3></Label><br/>
+		<button id="btncreateNote" class="btn btn-success">Create New Note</button><br/>
+		<Label id="lblMsg" align="center"></Label><br/>
+		<div id="divAllNotesList">
+		</div>
+		<div id="createdNotes">
+			<Label id='noOfNotes'></Label><br/>
+			<ul id="notesList">
+			</ul>
+		</div>
+		</div>
+	<script type="text/javascript">
+		var db;
+		var openRequest = indexedDB.open("notesDB", 2);
+		var i=1;
+		var homeLabel = document.getElementById("lblHome");
+		var createNote = document.getElementById("btncreateNote");
+		var noOfNotes = document.getElementById("noOfNotes");
+		var allNotesList = document.getElementById("divAllNotesList");
+		var lblMsg = document.getElementById("lblMsg");
+		var allCreatedNotes = document.getElementById("createdNotes");
+		var ul = document.getElementById("notesList");
+		createNote.addEventListener("click", createNewNote, false);
+		var contentWrapper, author, subject, notesText;
+		
+		document.addEventListener("DOMContentLoaded", function(){
+			console.log('dom loaded');
+			var request = indexedDB.open("MyTestDatabase");
+
+			request.onerror = function(event) {
+				alert("Indexed DB cannot be opened. Check your browser version.!");
+			};
+			
+			request.onsuccess = function(event) {
+				var transaction = db.transaction(["notes"], "readonly");
+				var objectStore = transaction.objectStore("notes");
+				var cursor = objectStore.openCursor();
+ 
+				cursor.onsuccess = function(e) 
+				{
+					var res = e.target.result;
+					if(!res)
+					{
+						lblMsg.innerHTML = "No notes added yet! Add a new one!";
+					}
+					else
+					{
+						lblMsg.innerHTML = "";
+						loadData();
+					}
+				}
+			};}, false);
+		
+		function loadOverallData()
+		{
+			lblMsg.innerHTML = "";
+			allNotesList.innerHTML = "";
+			allCreatedNotes.innerHTML = "";
+			ul.innerHTML = "";
+			showNotesData();
+		}
+		
+		function createNewNote()
+		{
+			//notesList.innerHTML = "";
+			lblMsg.innerHTML = "";
+			$('#divAllNotesList ul').empty();
+			contentWrapper = document.createElement('div');
+			var newLine1 = document.createElement("br");
+			var newLine2 = document.createElement("br");
+			var newLine3 = document.createElement("br");
+			author = document.createElement("INPUT");
+			author.setAttribute("type", "text");
+			author.placeholder = "Author Name";
+			subject = document.createElement("INPUT");
+			subject.setAttribute("type", "text");
+			subject.placeholder = "Subject";
+			notesText = document.createElement("TEXTAREA");
+			notesText.placeholder = "Notes Text";
+			contentWrapper.appendChild(author);
+			contentWrapper.appendChild(newLine1);
+			contentWrapper.appendChild(subject);
+			contentWrapper.appendChild(newLine2);
+			contentWrapper.appendChild(notesText);
+			contentWrapper.appendChild(newLine3);
+			allNotesList.appendChild(contentWrapper);
+			
+			var saveButton = document.createElement("button");
+			saveButton.className = "btn btn-primary";
+			saveButton.id = "btnSave";
+			saveButton.innerHTML = "Save";
+			contentWrapper.appendChild(saveButton);
+			
+			var backButton = document.createElement("button");
+			backButton.className = "btn btn-primary";
+			backButton.id = "btnBack";
+			backButton.innerHTML = "Back";
+			contentWrapper.appendChild(backButton);
+			
+			homeLabel.style.visibility = 'hidden';
+			createNote.style.visibility = 'hidden';
+			
+			saveButton.addEventListener("click", saveNote, false);
+			backButton.addEventListener("click", goBack, false);
+		}
+		
+		function goBack()
+		{
+			lblMsg.innerHTML = "";
+			homeLabel.style.visibility = 'visible';
+			createNote.style.visibility = 'visible';
+			contentWrapper.innerHTML = "";
+			loadData();
+		}
+		
+		function saveNote()
+		{
+			lblMsg.innerHTML = "";
+			var aauthor = author.value;
+			console.log(aauthor);
+			var asubject = subject.value;
+			console.log(asubject);
+			var anotesText = notesText.value;
+			console.log(anotesText);
+			var cdate = new Date();
+			
+			if((aauthor == 0) || (asubject == 0) || (anotesText == 0))
+			{
+            	alert("Either of the input field is blank. Please provide a value.");
+			}
+			else
+			{
+				if((aauthor.includes('<script>')))
+				{
+					aauthor.replace('<script', '&gt');
+					aauthor.replace('</script', '&gt');
+				}
+				if(asubject.includes('<script>'))
+				{
+					asubject.replace('<script', '&gt');
+					asubject.replace('</script', '&gt');
+				}
+				if(anotesText.includes('<script>'))
+				{
+					anotesText.replace('<script', '&gt');
+					anotesText.replace('</script', '&gt');				
+				}
+				if((aauthor.includes('<h')))
+				{
+					aauthor.replace('<h', '&h');
+					aauthor.replace('</h', '/&h');
+				}
+				if(asubject.includes('<h'))
+				{
+					asubject.replace('<h', '&h');
+					asubject.replace('</h', '/&h');
+				}
+				if(anotesText.includes('<h'))
+				{
+					anotesText.replace('<h', '&h');
+					anotesText.replace('</h', '/&h');				
+				}
+
+				var transaction = db.transaction(["notes"],"readwrite");
+				var store = transaction.objectStore("notes");
+				
+				var notesObj = {
+					name: aauthor,
+					subject: asubject,
+					notesText: anotesText,
+					created:cdate
+				}
+				
+				var request = store.add(notesObj);
+				
+				request.onerror = function(e) {
+					console.log("Error", e.target.error.name);
+				}
+				
+				request.onsuccess = function(e) {
+					console.log("Note Added!!!");
+				}
+				
+				var transaction = db.transaction(["notes"], "readonly");
+				var objectStore = transaction.objectStore("notes");
+	 
+				var cursor = objectStore.openCursor();
+	 
+				cursor.onsuccess = function(e) 
+				{
+					var res = e.target.result;
+					if(res)
+					{
+						console.log("Key", res.key);
+						for(var field in res.value)
+						{
+							console.dir(res.value[field]);
+						}
+						res.continue();	
+					}
+				}
+				
+				//above code to list notes
+				//allCreatedNotes.appendChild(contentWrapper);
+				//showNotesData();
+				loadData();
+				homeLabel.style.visibility = 'visible';
+				createNote.style.visibility = 'visible';
+				contentWrapper.innerHTML = "";
+			}
+		}	
+		
+		function showNotesData()
+		{
+			lblMsg.innerHTML = "";
+			var retrievedKey = 0;
+			var i=0;
+			var editButton, deleteButton, viewButton;
+			var objectStore = db.transaction("notes").objectStore("notes");
+			objectStore.openCursor().onsuccess = function(event) {
+				var cursor = event.target.result;
+				if (cursor) {
+					retrievedKey = cursor.key;
+					var li = document.createElement('li');
+					li.setAttribute('id', 'li'+i);
+					i++;
+					ul.appendChild(li);
+					li.innerHTML = cursor.value.created + "<br>" + cursor.value.subject;
+					editButton = document.createElement('button');
+					editButton.setAttribute('id', 'edit' + retrievedKey);
+					editButton. innerHTML = "Edit";
+					editButton.className = "btn btn-primary";
+					
+					deleteButton = document.createElement('button');
+					deleteButton.setAttribute('id', 'delete' + retrievedKey);
+					deleteButton.className = "btn btn-primary";
+					deleteButton. innerHTML = "Delete";
+					
+					viewButton = document.createElement('button');
+					viewButton.setAttribute('id', 'view' + retrievedKey);
+					viewButton.className = "btn btn-primary";
+					viewButton.innerHTML = "View";
+					
+					li.appendChild(editButton);
+					li.appendChild(deleteButton);
+					li.appendChild(viewButton);
+					
+					editButton.addEventListener("click", function(){editNote(retrievedKey);}, false);
+					deleteButton.addEventListener("click", function(){deleteNote(retrievedKey);}, false);
+					viewButton.addEventListener("click", function(){viewNote(retrievedKey);}, false);
+					cursor.continue();
+				}};			
+		}
+		
+		function viewNote(key)
+		{
+			lblMsg.innerHTML = "";
+			homeLabel.style.visibility = 'hidden';
+			createNote.style.visibility = 'hidden';
+			console.log("View note called with key = " + key);
+			var transaction = db.transaction(["notes"], "readwrite");
+			var objectStore = transaction.objectStore("notes");
+
+			var objectStoreRequest = objectStore.get(key);
+			objectStoreRequest.onsuccess = function(event) 
+			{
+				// report the success of our get operation
+				var myRecord = objectStoreRequest.result;
+				allCreatedNotes.innerHTML = "";
+				allNotesList.innerHTML = "";
+				
+				contentWrapper = document.createElement('div');
+				var newLine1 = document.createElement("br");
+				var newLine2 = document.createElement("br");
+				var newLine3 = document.createElement("br");
+				author = document.createElement("INPUT");
+				author.setAttribute("type", "text");
+				author.setAttribute("readOnly", true);
+				author.value = myRecord.name;
+		
+				subject = document.createElement("INPUT");
+				subject.setAttribute("type", "text");
+				subject.setAttribute("readOnly", true);
+				subject.value = myRecord.subject;
+				
+				notesText = document.createElement("TEXTAREA");
+				notesText.setAttribute("readOnly", true);
+				notesText.value = myRecord.notesText;
+				
+				var newLine4 = document.createElement("br");
+				var backButton = document.createElement('button');
+				backButton.setAttribute('id', 'backButton');
+				backButton.innerHTML = "Back";
+				backButton.className = "btn btn-primary";
+				contentWrapper.appendChild(author);
+				contentWrapper.appendChild(newLine1);
+				contentWrapper.appendChild(subject);
+				contentWrapper.appendChild(newLine2);
+				contentWrapper.appendChild(notesText);
+				contentWrapper.appendChild(newLine3);
+				contentWrapper.appendChild(backButton);
+				contentWrapper.appendChild(newLine4);
+				allNotesList.appendChild(contentWrapper);
+				
+				backButton.addEventListener("click", viewAndGoBack, false);
+			}				
+		}
+		
+		function viewAndGoBack()
+		{
+			lblMsg.innerHTML = "";
+			homeLabel.style.visibility = 'visible';
+			createNote.style.visibility = 'visible';
+			contentWrapper.innerHTML = "";
+			console.log('Loading data again on pressing back..');
+			loadData();
+		}
+		
+		function editNote(key)
+		{
+			lblMsg.innerHTML = "";
+			homeLabel.style.visibility = 'hidden';
+			createNote.style.visibility = 'hidden';
+
+			console.log("Edit note called with key = " + key);
+			var transaction = db.transaction(["notes"], "readwrite");
+			var objectStore = transaction.objectStore("notes");
+			
+			var objectStoreRequest = objectStore.get(key);
+			objectStoreRequest.onsuccess = function(event) 
+			{
+				// report the success of our get operation
+				var myRecord = objectStoreRequest.result;
+				allCreatedNotes.innerHTML = "";
+				allNotesList.innerHTML = "";
+				
+				contentWrapper = document.createElement('div');
+				var newLine1 = document.createElement("br");
+				var newLine2 = document.createElement("br");
+				var newLine3 = document.createElement("br");
+				author = document.createElement("INPUT");
+				author.setAttribute("type", "text");
+				author.value = myRecord.name;
+		
+				subject = document.createElement("INPUT");
+				subject.setAttribute("type", "text");
+				subject.value = myRecord.subject;
+				
+				notesText = document.createElement("TEXTAREA");
+				notesText.value = myRecord.notesText;
+				
+				var newLine4 = document.createElement("br");
+				var saveEditButton = document.createElement('button');
+				saveEditButton.setAttribute('id', 'saveEditButton');
+				saveEditButton.innerHTML = "Save";
+				saveEditButton.className = "btn btn-primary";
+
+				var backButton = document.createElement('button');
+				backButton.setAttribute('id', 'backButton');
+				backButton.innerHTML = "Back";
+				backButton.className = "btn btn-primary";
+
+				contentWrapper.appendChild(author);
+				contentWrapper.appendChild(newLine1);
+				contentWrapper.appendChild(subject);
+				contentWrapper.appendChild(newLine2);
+				contentWrapper.appendChild(notesText);
+				contentWrapper.appendChild(newLine3);
+				contentWrapper.appendChild(saveEditButton);
+				contentWrapper.appendChild(newLine4);
+				contentWrapper.appendChild(backButton);
+				allNotesList.appendChild(contentWrapper);
+								
+				saveEditButton.addEventListener("click", function(){saveEditedNote(key, myRecord, author, subject, notesText);}, false);
+				backButton.addEventListener("click", viewAndGoBack, false);
+			};
+		}
+		
+		function saveEditedNote(key, myRecord, author, subject, notesValue)
+		{
+			lblMsg.innerHTML = "";
+			console.log("Edited called.");
+			if((author.value == 0) || (subject.value == 0) || (notesValue.value == 0))
+			{
+            	alert("Either of the input field is blank. Please provide a value.");
+			}
+			else
+			{
+				var transaction = db.transaction(['notes'], 'readwrite');
+				var objectStore = transaction.objectStore('notes');
+				var objectStoreTitleRequest = objectStore.get(key);
+				
+				objectStoreTitleRequest.onsuccess = function() {
+				// Grab the data object returned as the result
+				var updateData = objectStoreTitleRequest.result;
+
+				// Update the notified value in the object to "yes"
+				updateData.name = author.value;
+				updateData.notesText = notesValue.value;
+				updateData.subject = subject.value;
+				updateData.created = new Date();
+				console.log(updateData);
+				deleteData(key);
+				// Create another request that inserts the item back into the database
+				var updateTitleRequest = objectStore.put(updateData);
+
+				// Log the transaction that originated this request
+				console.log("The transaction that originated this request is " + updateTitleRequest.transaction);
+				// When this new request succeeds, run the displayData() function again to update the display
+				updateTitleRequest.onsuccess = function() {
+					console.log('Done updation');
+					//ul.innerHTML = "";
+					//allNotesList.innerHTML = "";
+					$('#divAllNotesList div').empty();
+					console.log('Load data after saving..');
+					loadData();
+					console.log('Loaded data after saving..');
+				  };
+				};
+				homeLabel.style.visibility = 'visible';
+				createNote.style.visibility = 'visible';
+			}
+		}
+		
+		function loadData()
+		{
+			lblMsg.innerHTML = "";
+			var j = 0;
+			console.log('In load data');
+			var editButton, deleteButton, viewButton;
+			var objectStore = db.transaction("notes").objectStore("notes");
+			objectStore.openCursor().onsuccess = function(event) {
+			var cursor = event.target.result;
+			var list = document.createElement('ul');
+			if (cursor) {
+				j++;
+				var retrievedKey = cursor.key;
+				var li = document.createElement('li');
+				li.setAttribute('id', 'li'+i);
+				i++;
+				list.appendChild(li);
+				li.innerHTML = cursor.value.created + "<br>Subject Line = <b>" + cursor.value.subject + "</b><br>" + "Characters in Notes = <b>" + cursor.value.notesText.length + "</b>";
+				editButton = document.createElement('button');
+				editButton.setAttribute('id', 'edit' + retrievedKey);
+				editButton. innerHTML = "Edit";
+				editButton.className = "btn btn-primary";
+					
+				deleteButton = document.createElement('button');
+				deleteButton.setAttribute('id', 'delete' + retrievedKey);
+				deleteButton.className = "btn btn-primary";
+				deleteButton. innerHTML = "Delete";
+				
+				viewButton = document.createElement('button');
+				viewButton.setAttribute('id', 'view' + retrievedKey);
+				viewButton.className = "btn btn-primary";
+				viewButton.innerHTML = "View";
+	
+				li.appendChild(editButton);
+				li.appendChild(deleteButton);
+				li.appendChild(viewButton);
+				//alert("Name for SSN " + cursor.key + " is " + cursor.value.name);
+				list.appendChild(li);
+				allNotesList.appendChild(list);
+				editButton.addEventListener("click", function(){editNote(retrievedKey);}, false);
+				deleteButton.addEventListener("click", function(){deleteNote(retrievedKey);}, false);
+				viewButton.addEventListener("click", function(){viewNote(retrievedKey);}, false);
+				ul.innerHTML = "";
+				noOfNotes.innerHTML = 'Total Number of Notes = ' + j;
+				cursor.continue();
+			}};	
+		}
+		
+		function deleteData(key)
+		{
+			lblMsg.innerHTML = "";
+			console.log("Delete note called with key = " + key);
+			var transaction = db.transaction(["notes"], "readwrite");
+			var objectStore = transaction.objectStore("notes");
+
+			//Delete the specified record out of the object store
+			var objectStoreRequest = objectStore.delete(key);
+		}
+		
+		function deleteNote(key)
+		{
+			lblMsg.innerHTML = "";
+			console.log("Delete note called with key = " + key);
+			console.log("Delete data");
+			var transaction = db.transaction(["notes"], "readwrite");
+			var objectStore = transaction.objectStore("notes");
+
+			//Delete the specified record out of the object store
+			var objectStoreRequest = objectStore.delete(key);
+
+			objectStoreRequest.onsuccess = function(event) {
+				console.log("Note Deleted");
+				loadData();
+				//ul.innerHTML = "";
+				//showNotesData();
+			};
+				
+			allNotesList.innerHTML = "";
+			ul.innerHTML = "";
+			var objectStore = db.transaction("notes").objectStore("notes");
+			objectStore.openCursor().onsuccess = function(event) {
+			var cursor = event.target.result;
+			var retrievedKey = 0;
+			var editButton, deleteButton, viewButton;
+			if (cursor) {
+					retrievedKey = cursor.key;
+					var li = document.createElement('li');
+					li.setAttribute('id', 'li'+i);
+					i++;
+					ul.appendChild(li);
+					li.innerHTML = cursor.value.created + "<br>" + cursor.value.subject;
+					editButton = document.createElement('button');
+					editButton.setAttribute('id', 'edit' + retrievedKey);
+					editButton. innerHTML = "Edit";
+					editButton.className = "btn btn-primary";
+					
+					deleteButton = document.createElement('button');
+					deleteButton.setAttribute('id', 'delete' + retrievedKey);
+					deleteButton.className = "btn btn-primary";
+					deleteButton. innerHTML = "Delete";
+
+					viewButton = document.createElement('button');
+					viewButton.setAttribute('id', 'view' + retrievedKey);
+					viewButton. innerHTML = "View";
+					viewButton.className = "btn btn-primary";
+					
+					li.appendChild(editButton);
+					li.appendChild(deleteButton);
+					li.appendChild(viewButton);
+					//alert("Name for SSN " + cursor.key + " is " + cursor.value.name);
+					
+					editButton.addEventListener("click", function(){editNote(retrievedKey);}, false);
+					deleteButton.addEventListener("click", function(){deleteNote(retrievedKey);}, false);
+					viewButton.addEventListener("click", function(){viewNote(retrievedKey);}, false);
+					createNote.addEventListener("click", createNewNote, false);
+					cursor.continue();
+				}};		
+		}
+		
+		openRequest.onupgradeneeded = function(e) {
+			console.log("Upgrading...");
+			var thisDB = e.target.result;
+            if(!thisDB.objectStoreNames.contains("notes")) {
+                thisDB.createObjectStore("notes", {autoIncrement:true});
+            }
+		};
+		
+		openRequest.onsuccess = function(e){
+			console.log('Success creating DB');
+			db = e.target.result;
+		};
+		
+		openRequest.onerror = function(e) {
+			console.log('Error');
+			console.dir(e);
+		};
+	</script>
+</body>
+</html>

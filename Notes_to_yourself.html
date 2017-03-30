@@ -251,8 +251,6 @@
 				}
 				
 				//above code to list notes
-				//allCreatedNotes.appendChild(contentWrapper);
-				//showNotesData();
 				loadData();
 				homeLabel.style.visibility = 'visible';
 				createNote.style.visibility = 'visible';
@@ -358,7 +356,7 @@
 		
 		function viewAndGoBack()
 		{
-			lblMsg.innerHTML = "";
+			//lblMsg.innerHTML = "";
 			homeLabel.style.visibility = 'visible';
 			createNote.style.visibility = 'visible';
 			contentWrapper.innerHTML = "";
@@ -428,7 +426,7 @@
 		
 		function saveEditedNote(key, myRecord, author, subject, notesValue)
 		{
-			lblMsg.innerHTML = "";
+			//lblMsg.innerHTML = "";
 			console.log("Edited called.");
 			if((author.value == 0) || (subject.value == 0) || (notesValue.value == 0))
 			{
@@ -474,7 +472,7 @@
 		
 		function loadData()
 		{
-			lblMsg.innerHTML = "";
+			//lblMsg.innerHTML = "";
 			var j = 0;
 			console.log('In load data');
 			var editButton, deleteButton, viewButton;
@@ -533,7 +531,7 @@
 		
 		function deleteNote(key)
 		{
-			lblMsg.innerHTML = "";
+			//lblMsg.innerHTML = "";
 			console.log("Delete note called with key = " + key);
 			console.log("Delete data");
 			var transaction = db.transaction(["notes"], "readwrite");
